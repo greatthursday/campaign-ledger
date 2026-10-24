@@ -29,3 +29,9 @@ Manual browser inspection verified the connection/settings layout, remembered no
 For the real workbook, all 261 source award rows occur exactly once in the imported provenance. All three controls reconcile with exact fractions: the current Diemer total, Callista's pre-book adjusted total and Callista's explicit post-book reset. The complete source fingerprint and detailed controls/review items are kept in the private data repository, not bundled into the frontend.
 
 Manual browser QA imported the reconciled JSON, verified both displayed totals, reviewed the unknown-date banner/filter, opened an original fractional-share calculation for both recipients, and checked that editing retains the unknown-date checkbox, fractional divisor and original source metadata. No workbook changes or deployment occurred.
+
+## Browser request binding fix
+
+The live connection error was reproduced with the browser's native fetch stored as an instance method: it threw an Illegal invocation TypeError before making a request. Binding fetch to the global receiver fixed the reproduction; a credential-free public GitHub API request returned HTTP 200. A regression test now exercises both initial and forked client sessions with receiver-sensitive fetch behavior. The app entry point and direct storage import have versioned URLs so existing browser caches receive this fix after reloading.
+
+85 Node tests now pass. No user token was requested, inspected or used during diagnosis.

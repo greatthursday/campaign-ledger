@@ -1,6 +1,6 @@
 import {createCampaign,createCharacter,createAward,createAdjustment,replayCampaign,upsertEvent,removeEvent,recalculateCategory,previewEvent,exportJSON,importJSON,exportCSV} from './index.js';
 import {loadLocal,saveLocal} from './local-storage.js';
-import {GitHubStorage,normalizeGitHubConfig} from './github-storage.js';
+import {GitHubStorage,normalizeGitHubConfig} from './github-storage.js?v=2';
 import {loadConnectionSettings,saveConnectionSettings,DEFAULT_GITHUB_CONFIG} from './connection-settings.js';
 import {githubSettings} from './github-ui.js';
 import {esc,fmt,fraction,title,option,overview,characters,ledger,settings,eventDetails,sameAdjustmentInputs} from './ui.js';

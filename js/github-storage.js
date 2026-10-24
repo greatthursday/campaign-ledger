@@ -22,7 +22,7 @@ export class GitHubStorage {
   constructor(config,token,{fetchImpl=globalThis.fetch,timeoutMs=20000}={}){
     this.#config=normalizeGitHubConfig(config);
     if(typeof token!=='string'||!token.trim()||/\s/.test(token.trim()))throw new StorageError('TOKEN','Enter a repository-scoped fine-grained token.');
-    this.#token=token.trim();this.#fetch=fetchImpl;this.#timeout=timeoutMs;
+    this.#token=token.trim();this.#fetch=fetchImpl.bind(globalThis);this.#timeout=timeoutMs;
   }
   get config(){return {...this.#config};}
   fork(){if(!this.#token)throw new StorageError('TOKEN','Reconnect with a token to continue.');return new GitHubStorage(this.#config,this.#token,{fetchImpl:this.#fetch,timeoutMs:this.#timeout});}
