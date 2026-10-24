@@ -181,7 +181,10 @@
           "type": "string"
         },
         "wisdom": {
-          "type": "integer",
+          "type": [
+            "integer",
+            "null"
+          ],
           "minimum": 1,
           "maximum": 25
         },
@@ -242,7 +245,28 @@
         "notes",
         "active"
       ],
-      "additionalProperties": true
+      "additionalProperties": true,
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "wisdom": {
+                "type": "null"
+              }
+            },
+            "required": [
+              "wisdom"
+            ]
+          },
+          "then": {
+            "properties": {
+              "wisdomOverride": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      ]
     },
     "category": {
       "type": "object",
@@ -410,7 +434,7 @@
         },
         "divisor": {
           "type": [
-            "integer",
+            "number",
             "null"
           ],
           "minimum": 1
@@ -433,6 +457,16 @@
           "items": {
             "$ref": "#/$defs/allocation"
           }
+        },
+        "dateStatus": {
+          "enum": [
+            "recorded",
+            "unknown"
+          ]
+        },
+        "sourceDate": {
+          "type": "string",
+          "format": "date"
         }
       },
       "required": [
@@ -515,6 +549,16 @@
           "items": {
             "$ref": "#/$defs/adjustmentAllocation"
           }
+        },
+        "dateStatus": {
+          "enum": [
+            "recorded",
+            "unknown"
+          ]
+        },
+        "sourceDate": {
+          "type": "string",
+          "format": "date"
         }
       },
       "required": [

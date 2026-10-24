@@ -52,9 +52,10 @@ See [GitHub setup and storage API](docs/GITHUB_SETUP.md) for the exact repositor
 - `data/campaign.schema.json`: JSON Schema 2020-12 structural contract.
 - `docs/API.md`, `RULES.md`, `TESTING.md`: public engine API, assumptions, rules sources and validation record.
 - `scripts/serve.mjs`: dependency-free local development server only.
+- `scripts/migration/`: read-only workbook extraction and deterministic two-character migration. Python 3 is required only for these offline tools and their tests.
 
 ## Remaining phases
 
-The private data repository must be created/authorized and the real app-token roundtrip verified. Workbook migration/reconciliation and GitHub Pages deployment remain for later phases. No production site has been published.
+The private data repository must be created/authorized and the real app-token roundtrip verified. Workbook history has been migrated/reconciled into the private data repository, with review flags for missing dates/source gaps. GitHub Pages deployment remains. No production site has been published.
 
 Custom unequal awards are preserved, displayed, exported and calculated; their allocation editing remains a JSON-level extension in this interface. Druid hierophant transitions require the explicit profile track and DM-approved reset described in `docs/RULES.md`.

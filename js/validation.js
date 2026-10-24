@@ -22,7 +22,7 @@ export function validateCampaign(c) {
   check(text(ch.id)&&text(ch.name)&&ch.campaignId===c.id,'Invalid character identity');
   check(typeof ch.race==='string'&&typeof ch.notes==='string','Invalid character text');
   check(Boolean(LEVEL_TABLES[ch.classId]),'Invalid class');try{progression(ch.classId,ch.progressionTrack);}catch{errors.push('Invalid progression track');}
-  check(Number.isInteger(ch.wisdom)&&ch.wisdom>=1&&ch.wisdom<=25,'Invalid wisdom');
+  check((Number.isInteger(ch.wisdom)&&ch.wisdom>=1&&ch.wisdom<=25)||(ch.wisdom===null&&typeof ch.wisdomOverride==='boolean'),'Invalid wisdom');
   check(ch.manualLevel===null||(Number.isInteger(ch.manualLevel)&&ch.manualLevel>=1&&ch.manualLevel<=20),'Invalid manual level');
   for(const k of ['namedOverride','wisdomOverride'])check(ch[k]===null||typeof ch[k]==='boolean',`Invalid ${k}`);
   check(typeof ch.stronghold==='boolean'&&typeof ch.active==='boolean','Invalid character status');
@@ -33,6 +33,7 @@ export function validateCampaign(c) {
   if(!e){errors.push('Invalid event');continue;}
   check(text(e.id)&&e.campaignId===c.id&&text(e.description),'Invalid event identity');
   check(typeof e.notes==='string','Invalid event notes');
+  check(e.dateStatus===undefined||['recorded','unknown'].includes(e.dateStatus),'Invalid date status');
   check(date(e.date)&&time(e.createdAt)&&time(e.modifiedAt)&&Date.parse(e.modifiedAt)>=Date.parse(e.createdAt),'Invalid event dates');
   check(Number.isSafeInteger(e.order)&&e.order>=0,'Invalid event order');
   check(['award','adjustment'].includes(e.type),'Invalid event type');
@@ -44,7 +45,7 @@ export function validateCampaign(c) {
   if(e.type==='award'){
    check(cats.has(e.categoryId),'Unknown category');check(typeof e.unit==='string'&&typeof e.itemDescription==='string','Invalid award text');check(num(e.inputValue,0)&&num(e.multiplier,0),'Invalid award input');
    check(['shared','individual','custom'].includes(e.distribution),'Invalid distribution');
-   check(e.distribution!=='shared'||(Number.isInteger(e.divisor)&&e.divisor>=e.allocations.length),'Invalid share divisor');
+   check(e.distribution!=='shared'||(num(e.divisor,e.allocations.length)&&e.divisor>0),'Invalid share divisor');
    for(const a of e.allocations)check(rat(a.baseXp,true),'Invalid allocation baseXp');
    if(e.treasureKey!=null)check(text(e.treasureKey),'Invalid treasure key');
   }else{

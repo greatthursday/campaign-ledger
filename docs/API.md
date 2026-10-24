@@ -71,3 +71,13 @@ Methods: `setAdjusted`, `addAdjusted` (signed change), `setBase`. All recipients
 Each history entry contains `eventId`, `date`, `type`, and `entries`. Each recipient entry contains `before`, `after`, and exact `baseChange`. History uses **current character settings**, including retroactive bonuses, rather than pretending to reconstruct past ownership/Wisdom settings. Frozen adjustment conversion multipliers record the original conversion. A future UI can display one timeline row per event using the campaign event joined to this history.
 
 For initial imports, create explicit baselines and frozen historical base awards. Never infer old multipliers from current defaults without reconciliation. JSON schema has no dependency on a specific JSON Schema validator; runtime validation is included without third-party packages.
+
+## Historical import metadata
+
+Shared divisors may be positive fractional share counts (for example 5.5), provided there are enough shares for all tracked recipients. This preserves fractional-share calculations in the original workbook.
+
+A Wisdom score can be `null` when unknown, provided `wisdomOverride` explicitly enables/disables the bonus. Automatic bonus eligibility still requires a known score.
+
+Imported events may have `dateStatus: 'unknown'` and a required internal `date` ordering anchor. The UI labels these as undated rather than presenting the anchor as a session date. `dateStatus: 'recorded'` identifies a recorded/confirmed date. `source` retains original workbook cell references, formulas, raw base XP, legacy adjusted awards, descriptions and recorded dates. `reviewFlags` mark specific gaps. Editing an imported event retains its source metadata.
+
+CSV exports include explicit date status and ordering-anchor columns, plus original source values. An unknown event date is exported as blank in the actual date column. JSON remains the lossless backup. If a pre-reset event is assigned a real date, also review the reset's unknown date so actual chronological ordering is maintained; the live preview exposes any effect on current totals.
