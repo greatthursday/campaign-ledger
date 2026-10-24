@@ -1,0 +1,56 @@
+
+> campaign-ledger-core@1.0.0 test
+> node --test
+
+✔ shared divisor includes untracked characters (6.171035ms)
+✔ individual amount goes to each recipient (0.936525ms)
+✔ all bonus combinations are additive (0.323328ms)
+✔ Wisdom eligibility is Cleric 16+, with overrides (0.306804ms)
+✔ 800000 at 1.10 becomes 909091 at 1.25 without base rounding (0.340213ms)
+✔ named qualification excludes its own bonus (0.256229ms)
+✔ manual level does not activate named bonus (0.286814ms)
+✔ custom bonus adds independently (0.174878ms)
+✔ retroactive setting edits preserve base awards (1.394071ms)
+✔ category default changes do not rewrite historical multipliers (1.140807ms)
+✔ magic items default to zero (0.298351ms)
+✔ explicit multiplier override (0.293544ms)
+✔ explicit historical category recalculation (0.678423ms)
+✔ set adjusted converts exact target and future stronghold is retroactive (1.081519ms)
+✔ set adjusted resolves automatic named bonus from target (0.457216ms)
+✔ impossible auto-named target requires explicit override (0.540329ms)
+✔ adjustment common and per-character amounts (1.342805ms)
+✔ add/subtract adjusted freezes base conversion (1.00768ms)
+✔ reset supersedes earlier edits but keeps earlier history (1.483153ms)
+✔ editing before a reset and deleting reset replays expected totals (1.285281ms)
+✔ same date uses order then id independent of array ordering (1.017023ms)
+✔ timestamps do not reorder events (0.940731ms)
+✔ inserting adjustment converts using chronological predecessor (1.198402ms)
+✔ round only final total; repeating shares stay exact (49.023677ms)
+✔ rounding policies and safe range (0.256749ms)
+✔ all published table thresholds and one XP below boundaries (0.362015ms)
+✔ progress and table limits (0.166105ms)
+✔ Druid rank restrictions and separate hierophant track (0.138695ms)
+✔ unequal allocations supported with pool bound (0.675629ms)
+✔ negative resulting XP rejected, negative changes accepted (0.600398ms)
+✔ duplicate treasure identity blocks second award (0.811069ms)
+✔ validation rejects malformed imports and duplicate identities (1.05502ms)
+✔ reject invalid recipients, dates, shares, infinite inputs and stale allocations (1.002232ms)
+✔ archive preserves history; hard delete referenced character is rejected (0.559657ms)
+✔ JSON roundtrip and CSV formula protection (1.209919ms)
+✔ public operations do not mutate inputs; preview supplies before/after (0.468503ms)
+✔ sample is illustrative and reconciles declared expected values (0.795436ms)
+✔ editing metadata preserves creation time and ordering by default (0.511707ms)
+✔ malformed allocation objects return diagnostics instead of crashing (0.313674ms)
+✔ frozen adjusted reset survives prior award and category edits (1.966437ms)
+✔ add adjusted crossing named activates retroactive jump (0.828224ms)
+✔ event deletion and settings changes can revoke automatic named bonus (0.482574ms)
+✔ small decimal numeric inputs preserve exact exponent notation values (0.276719ms)
+✔ reference examples distinguish class advancement at the same XP (0.084786ms)
+ℹ tests 44
+ℹ suites 0
+ℹ pass 44
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 192.073644

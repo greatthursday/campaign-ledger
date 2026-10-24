@@ -1,0 +1,11 @@
+import {writeFileSync} from 'node:fs';
+import {createCampaign,createCharacter,createAdjustment,createAward,upsertEvent,exportJSON} from '../js/index.js';
+let c=createCampaign({id:'illustrative-campaign',name:'Campaign Ledger — illustrative sample'});
+c.illustrative=true;c.notes='Synthetic demonstration only. Not imported from DND.xlsx and not a statement of real campaign balances.';
+c.characters=[createCharacter({id:'callista',campaignId:c.id,name:'Callista',classId:'cleric',wisdom:19,namedOverride:null}),createCharacter({id:'diemer',campaignId:c.id,name:'Diemer',classId:'cleric',wisdom:16,namedOverride:null})];
+const m=(id,date,description)=>({id,date,description,createdAt:'2026-01-01T00:00:00.000Z'});
+c=upsertEvent(c,createAdjustment(c,{...m('opening','2026-01-01','Illustrative opening baselines'),method:'setBase',reason:'Synthetic test data',recipients:[{characterId:'callista',amount:720000},{characterId:'diemer',amount:560000}]}));
+c=upsertEvent(c,createAward(c,{...m('encounter','2026-01-02','Illustrative shared encounter'),categoryId:'combat',inputValue:20000,distribution:'shared',divisor:4,recipientIds:['callista','diemer']}));
+c=upsertEvent(c,createAward(c,{...m('gem','2026-01-03','Illustrative ruby treasure'),categoryId:'gems',inputValue:1000,unit:'gp',treasureKey:'illustrative-ruby',distribution:'shared',divisor:4,recipientIds:['callista','diemer']}));
+c.expectedAdjustedXp={callista:906563,diemer:706563};
+writeFileSync(new URL('./sample-campaign.json',import.meta.url),exportJSON(c));

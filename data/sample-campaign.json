@@ -1,0 +1,191 @@
+{
+  "schemaVersion": 1,
+  "id": "illustrative-campaign",
+  "name": "Campaign Ledger — illustrative sample",
+  "illustrative": true,
+  "settings": {
+    "rounding": "nearest",
+    "recentEventCount": 5,
+    "namedQualification": "beforeNamed",
+    "namedLevels": {
+      "cleric": 9,
+      "fighter": 9,
+      "ranger": 10,
+      "paladin": 9,
+      "mage": 9,
+      "thief": 10,
+      "bard": 9,
+      "druid": 12
+    }
+  },
+  "categories": [
+    {
+      "id": "combat",
+      "name": "Combat",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "currency",
+      "name": "Treasure — Currency",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "gems",
+      "name": "Treasure — Gems & Jewelry",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "magic",
+      "name": "Treasure — Magic Items",
+      "multiplier": 0,
+      "active": true
+    },
+    {
+      "id": "roleplay",
+      "name": "Roleplay & Actions",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "quests",
+      "name": "Quests & Milestones",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "other",
+      "name": "Treasure — Other Valuable Items",
+      "multiplier": 1,
+      "active": true
+    }
+  ],
+  "characters": [
+    {
+      "id": "callista",
+      "campaignId": "illustrative-campaign",
+      "name": "Callista",
+      "classId": "cleric",
+      "race": "Human",
+      "wisdom": 19,
+      "progressionTrack": "standard",
+      "manualLevel": null,
+      "namedOverride": null,
+      "wisdomOverride": null,
+      "stronghold": false,
+      "customBonusPercent": 0,
+      "notes": "",
+      "active": true
+    },
+    {
+      "id": "diemer",
+      "campaignId": "illustrative-campaign",
+      "name": "Diemer",
+      "classId": "cleric",
+      "race": "Human",
+      "wisdom": 16,
+      "progressionTrack": "standard",
+      "manualLevel": null,
+      "namedOverride": null,
+      "wisdomOverride": null,
+      "stronghold": false,
+      "customBonusPercent": 0,
+      "notes": "",
+      "active": true
+    }
+  ],
+  "events": [
+    {
+      "id": "opening",
+      "campaignId": "illustrative-campaign",
+      "date": "2026-01-01",
+      "order": 0,
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "modifiedAt": "2026-01-01T00:00:00.000Z",
+      "description": "Illustrative opening baselines",
+      "notes": "",
+      "type": "adjustment",
+      "method": "setBase",
+      "reason": "Synthetic test data",
+      "allocations": [
+        {
+          "characterId": "callista",
+          "amount": 720000,
+          "conversionMultiplier": "11/10",
+          "baseXp": "720000/1"
+        },
+        {
+          "characterId": "diemer",
+          "amount": 560000,
+          "conversionMultiplier": "11/10",
+          "baseXp": "560000/1"
+        }
+      ]
+    },
+    {
+      "id": "encounter",
+      "campaignId": "illustrative-campaign",
+      "date": "2026-01-02",
+      "order": 1,
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "modifiedAt": "2026-01-01T00:00:00.000Z",
+      "description": "Illustrative shared encounter",
+      "notes": "",
+      "type": "award",
+      "categoryId": "combat",
+      "inputValue": 20000,
+      "multiplier": 1,
+      "distribution": "shared",
+      "divisor": 4,
+      "unit": "XP",
+      "itemDescription": "",
+      "treasureKey": null,
+      "allocations": [
+        {
+          "characterId": "callista",
+          "baseXp": "5000/1"
+        },
+        {
+          "characterId": "diemer",
+          "baseXp": "5000/1"
+        }
+      ]
+    },
+    {
+      "id": "gem",
+      "campaignId": "illustrative-campaign",
+      "date": "2026-01-03",
+      "order": 2,
+      "createdAt": "2026-01-01T00:00:00.000Z",
+      "modifiedAt": "2026-01-01T00:00:00.000Z",
+      "description": "Illustrative ruby treasure",
+      "notes": "",
+      "type": "award",
+      "categoryId": "gems",
+      "inputValue": 1000,
+      "multiplier": 1,
+      "distribution": "shared",
+      "divisor": 4,
+      "unit": "gp",
+      "itemDescription": "",
+      "treasureKey": "illustrative-ruby",
+      "allocations": [
+        {
+          "characterId": "callista",
+          "baseXp": "250/1"
+        },
+        {
+          "characterId": "diemer",
+          "baseXp": "250/1"
+        }
+      ]
+    }
+  ],
+  "notes": "Synthetic demonstration only. Not imported from DND.xlsx and not a statement of real campaign balances.",
+  "expectedAdjustedXp": {
+    "callista": 906563,
+    "diemer": 706563
+  }
+}

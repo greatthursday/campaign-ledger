@@ -1,0 +1,537 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:campaign-ledger:schema:v1",
+  "title": "Campaign Ledger campaign v1",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "illustrative": {
+      "type": "boolean"
+    },
+    "notes": {
+      "type": "string"
+    },
+    "settings": {
+      "$ref": "#/$defs/settings"
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/category"
+      }
+    },
+    "characters": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/character"
+      }
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/award"
+          },
+          {
+            "$ref": "#/$defs/adjustment"
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "name",
+    "settings",
+    "categories",
+    "characters",
+    "events"
+  ],
+  "additionalProperties": true,
+  "$defs": {
+    "settings": {
+      "type": "object",
+      "properties": {
+        "rounding": {
+          "enum": [
+            "nearest",
+            "floor",
+            "ceil"
+          ]
+        },
+        "recentEventCount": {
+          "enum": [
+            3,
+            5,
+            10,
+            20
+          ]
+        },
+        "namedQualification": {
+          "enum": [
+            "beforeNamed",
+            "includingNamed"
+          ]
+        },
+        "namedLevels": {
+          "type": "object",
+          "properties": {
+            "cleric": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "fighter": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "ranger": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "paladin": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "mage": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "thief": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "bard": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "druid": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            }
+          },
+          "required": [
+            "cleric",
+            "fighter",
+            "ranger",
+            "paladin",
+            "mage",
+            "thief",
+            "bard",
+            "druid"
+          ],
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "rounding",
+        "recentEventCount",
+        "namedQualification",
+        "namedLevels"
+      ],
+      "additionalProperties": true
+    },
+    "character": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "campaignId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "classId": {
+          "enum": [
+            "cleric",
+            "fighter",
+            "ranger",
+            "paladin",
+            "mage",
+            "thief",
+            "bard",
+            "druid"
+          ]
+        },
+        "race": {
+          "type": "string"
+        },
+        "wisdom": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 25
+        },
+        "progressionTrack": {
+          "enum": [
+            "standard",
+            "hierophant"
+          ]
+        },
+        "manualLevel": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 20
+        },
+        "namedOverride": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "wisdomOverride": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "stronghold": {
+          "type": "boolean"
+        },
+        "customBonusPercent": {
+          "type": "number",
+          "minimum": -99,
+          "maximum": 1000
+        },
+        "notes": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "campaignId",
+        "name",
+        "classId",
+        "race",
+        "wisdom",
+        "progressionTrack",
+        "manualLevel",
+        "namedOverride",
+        "wisdomOverride",
+        "stronghold",
+        "customBonusPercent",
+        "notes",
+        "active"
+      ],
+      "additionalProperties": true
+    },
+    "category": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000000000000.0
+        },
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "multiplier",
+        "active"
+      ],
+      "additionalProperties": true
+    },
+    "allocation": {
+      "type": "object",
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "baseXp": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^-?\\d+/[1-9]\\d*$"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            }
+          ]
+        }
+      },
+      "required": [
+        "characterId",
+        "baseXp"
+      ],
+      "additionalProperties": true
+    },
+    "adjustmentAllocation": {
+      "type": "object",
+      "properties": {
+        "characterId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "amount": {
+          "type": "number",
+          "minimum": -1000000000000.0,
+          "maximum": 1000000000000.0
+        },
+        "conversionMultiplier": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^-?\\d+/[1-9]\\d*$"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            }
+          ]
+        },
+        "baseXp": {
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^-?\\d+/[1-9]\\d*$"
+            },
+            {
+              "type": "number",
+              "minimum": -1000000000000.0,
+              "maximum": 1000000000000.0
+            }
+          ]
+        }
+      },
+      "required": [
+        "characterId",
+        "amount",
+        "conversionMultiplier",
+        "baseXp"
+      ],
+      "additionalProperties": true
+    },
+    "award": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "campaignId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "modifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string"
+        },
+        "type": {
+          "const": "award"
+        },
+        "categoryId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inputValue": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000000000000.0
+        },
+        "multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1000000000000.0
+        },
+        "distribution": {
+          "enum": [
+            "individual",
+            "shared",
+            "custom"
+          ]
+        },
+        "divisor": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1
+        },
+        "unit": {
+          "type": "string"
+        },
+        "itemDescription": {
+          "type": "string"
+        },
+        "treasureKey": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "allocations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/allocation"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "campaignId",
+        "date",
+        "order",
+        "createdAt",
+        "modifiedAt",
+        "description",
+        "notes",
+        "type",
+        "categoryId",
+        "inputValue",
+        "multiplier",
+        "distribution",
+        "divisor",
+        "unit",
+        "itemDescription",
+        "treasureKey",
+        "allocations"
+      ],
+      "additionalProperties": true
+    },
+    "adjustment": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "campaignId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "date": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "order": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "modifiedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "Z$"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string"
+        },
+        "type": {
+          "const": "adjustment"
+        },
+        "method": {
+          "enum": [
+            "setAdjusted",
+            "addAdjusted",
+            "setBase"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "allocations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/adjustmentAllocation"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "campaignId",
+        "date",
+        "order",
+        "createdAt",
+        "modifiedAt",
+        "description",
+        "notes",
+        "type",
+        "method",
+        "reason",
+        "allocations"
+      ],
+      "additionalProperties": true
+    }
+  }
+}
