@@ -1,6 +1,6 @@
 # Campaign Ledger
 
-A lightweight, buildless AD&D 2E experience tracker. Phase 2 includes a responsive dark fantasy browser interface backed by the independent, tested XP engine.
+A lightweight, buildless AD&D 2E experience tracker. Phase 3 includes the responsive dark fantasy interface, independent tested XP engine, and private GitHub campaign persistence.
 
 ## Run locally
 
@@ -35,7 +35,9 @@ Tests use Node's built-in test runner. Production files are static and will work
 
 **Save on this device** stores the complete campaign in this browser's localStorage. It does not sync between browsers, devices, or GitHub. Browser data clearing/private mode can remove local saves. Export JSON for a portable backup. Import validates the full ledger before replacing the open campaign. Loading a sample/new campaign/import does not overwrite the last device save until Save is clicked.
 
-The GitHub connection used to maintain this source repository is separate from the future app's campaign-data connection. The application currently contains no GitHub token, authentication or API calls.
+GitHub campaign saving is now implemented in Settings. It uses a separate private data repository, an in-memory fine-grained token, explicit commits, and SHA-based conflict detection. The ChatGPT connection used to maintain this source repository is separate from the app's campaign-data token. No credentials are included in source or campaign exports.
+
+See [GitHub setup and storage API](docs/GITHUB_SETUP.md) for the exact repository/token steps, conflict recovery, 1 MiB file limit and verification scope. `data/empty-campaign.json` is an empty starter awaiting migration; it is safe to use instead of illustrative balances.
 
 ## Structure
 
@@ -43,6 +45,8 @@ The GitHub connection used to maintain this source repository is separate from t
 - `js/app.js`: browser event handling and forms; calculations call the engine.
 - `js/ui.js`: view rendering and ledger filters; all user-supplied HTML text is escaped.
 - `js/local-storage.js`: independent browser-local persistence adapter.
+- `js/github-storage.js`: private GitHub Contents API adapter and conflict detection.
+- `js/github-ui.js`, `connection-settings.js`: connection controls and secret-free target preferences.
 - `js/xp-engine.js`, `rational.js`, `level-tables.js`: independent exact calculations and verified 2E thresholds.
 - `js/data-model.js`, `validation.js`, `serialization.js`: records, validation and portable data.
 - `data/campaign.schema.json`: JSON Schema 2020-12 structural contract.
@@ -51,6 +55,6 @@ The GitHub connection used to maintain this source repository is separate from t
 
 ## Remaining phases
 
-GitHub load/save with session-only token and SHA conflict detection, workbook migration and reconciliation, and GitHub Pages deployment remain for later phases. No production site has been published.
+The private data repository must be created/authorized and the real app-token roundtrip verified. Workbook migration/reconciliation and GitHub Pages deployment remain for later phases. No production site has been published.
 
 Custom unequal awards are preserved, displayed, exported and calculated; their allocation editing remains a JSON-level extension in this interface. Druid hierophant transitions require the explicit profile track and DM-approved reset described in `docs/RULES.md`.

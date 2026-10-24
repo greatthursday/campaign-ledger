@@ -5,3 +5,4 @@
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 
 .field,input,select,textarea{min-width:0}.recipient .check{flex:1}.activity-title,.activity-meta,.character-card h3{overflow-wrap:anywhere}@media(max-width:560px){input,select,textarea{font-size:16px}.navigation a{min-height:48px}.button.ghost{min-height:36px}.dialog-footer .button{min-height:44px}}
+.github-status{font-size:12px;color:var(--muted);padding:13px 0;overflow-wrap:anywhere}.github-status.error{color:var(--red)}.header-actions{flex-wrap:wrap;justify-content:flex-end}.header-actions #save-github{min-width:110px}@media(max-width:560px){.header-actions{flex-wrap:nowrap;flex-direction:column;align-items:stretch;gap:5px}.header-actions .button{min-width:0!important;max-width:110px;min-height:33px}.masthead{align-items:center}.github-status{font-size:12px}}

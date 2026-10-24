@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "id": "7e3556e6-ed0b-4299-b3c2-3aea68b3db19",
+  "name": "Our AD&D campaign",
+  "illustrative": false,
+  "settings": {
+    "rounding": "nearest",
+    "recentEventCount": 5,
+    "namedQualification": "beforeNamed",
+    "namedLevels": {
+      "cleric": 9,
+      "fighter": 9,
+      "ranger": 10,
+      "paladin": 9,
+      "mage": 9,
+      "thief": 10,
+      "bard": 9,
+      "druid": 12
+    }
+  },
+  "categories": [
+    {
+      "id": "combat",
+      "name": "Combat",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "currency",
+      "name": "Treasure — Currency",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "gems",
+      "name": "Treasure — Gems & Jewelry",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "magic",
+      "name": "Treasure — Magic Items",
+      "multiplier": 0,
+      "active": true
+    },
+    {
+      "id": "roleplay",
+      "name": "Roleplay & Actions",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "quests",
+      "name": "Quests & Milestones",
+      "multiplier": 1,
+      "active": true
+    },
+    {
+      "id": "other",
+      "name": "Treasure — Other Valuable Items",
+      "multiplier": 1,
+      "active": true
+    }
+  ],
+  "characters": [],
+  "events": [],
+  "notes": "Empty starter. Workbook balances and historical events have not been migrated."
+}

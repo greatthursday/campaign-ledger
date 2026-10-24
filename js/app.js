@@ -1,16 +1,31 @@
 import {createCampaign,createCharacter,createAward,createAdjustment,replayCampaign,upsertEvent,removeEvent,recalculateCategory,previewEvent,exportJSON,importJSON,exportCSV} from './index.js';
 import {loadLocal,saveLocal} from './local-storage.js';
+import {GitHubStorage,normalizeGitHubConfig} from './github-storage.js';
+import {loadConnectionSettings,saveConnectionSettings,DEFAULT_GITHUB_CONFIG} from './connection-settings.js';
+import {githubSettings} from './github-ui.js';
 import {esc,fmt,fraction,title,option,overview,characters,ledger,settings,eventDetails,sameAdjustmentInputs} from './ui.js';
 const $=s=>document.querySelector(s), dialog=$('#editor');
 let campaign,dirty=false,view='overview',showArchived=false,editingEvent=null,editingCharacter=null,toastTimer;
+let githubClient=null,githubSnapshot=null,githubBusy=false,githubMissing=false,githubError=null;
+let githubConfig={...DEFAULT_GITHUB_CONFIG};
+try{githubConfig=loadConnectionSettings(localStorage);}catch{/* A corrupt target setting never prevents opening a campaign. */}
+const remoteDirty=()=>githubSnapshot!==null&&exportJSON(campaign)!==githubSnapshot;
 const filters={character:'',category:'',search:'',sort:'desc'};
 const now=()=>new Date().toISOString();
 function id(){if(crypto.randomUUID)return crypto.randomUUID();const bytes=crypto.getRandomValues(new Uint8Array(16));bytes[6]=(bytes[6]&15)|64;bytes[8]=(bytes[8]&63)|128;const hex=[...bytes].map(b=>b.toString(16).padStart(2,'0')).join('');return [hex.slice(0,8),hex.slice(8,12),hex.slice(12,16),hex.slice(16,20),hex.slice(20)].join('-');}
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;};
 function toast(message){$('#toast').textContent=message;$('#toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),5000);}
-function updateStatus(){const state=$('#save-state');state.textContent=dirty?'Unsaved changes':'No unsaved changes';state.classList.toggle('dirty',dirty);}
-function render(){const r=replayCampaign(campaign);view=['overview','characters','ledger','settings'].includes(location.hash.slice(1))?location.hash.slice(1):'overview';document.querySelectorAll('[data-view]').forEach(a=>{if(a.dataset.view===view)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#main').innerHTML=view==='overview'?overview(campaign,r):view==='characters'?characters(campaign,r,showArchived):view==='ledger'?ledger(campaign,r,filters):settings(campaign);updateStatus();}
-function accept(candidate){replayCampaign(candidate);campaign=candidate;dirty=true;render();}
+function updateStatus(){
+ const state=$('#save-state');
+ state.textContent=githubBusy?'Contacting GitHub…':githubError?'GitHub needs attention':githubClient?.loaded?remoteDirty()?'Unsaved to GitHub':'Saved to GitHub':dirty?'Unsaved changes':'Device copy · GitHub disconnected';
+ state.classList.toggle('dirty',dirty||remoteDirty()||Boolean(githubError));
+ const primary=$('#save-github');primary.textContent=githubClient?.loaded?'Save to GitHub':'Connect GitHub';primary.disabled=githubBusy;
+ $('#connection-footer').textContent=githubClient?`GitHub · ${githubConfig.owner}/${githubConfig.repo}`:'Device mode · GitHub disconnected';
+}
+function paintGitHub(){const slot=$('#github-settings-slot');if(slot)slot.innerHTML=githubSettings(githubConfig,{connected:Boolean(githubClient),loaded:Boolean(githubClient?.loaded),busy:githubBusy,missing:githubMissing,error:githubError,hasChanges:remoteDirty()});updateStatus();}
+
+function render(){const r=replayCampaign(campaign);view=['overview','characters','ledger','settings'].includes(location.hash.slice(1))?location.hash.slice(1):'overview';document.querySelectorAll('[data-view]').forEach(a=>{if(a.dataset.view===view)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});$('#main').innerHTML=view==='overview'?overview(campaign,r):view==='characters'?characters(campaign,r,showArchived):view==='ledger'?ledger(campaign,r,filters):settings(campaign);paintGitHub();}
+function accept(candidate){replayCampaign(candidate);if(campaign&&candidate.id!==campaign.id&&githubClient){if(githubBusy)throw new Error('Wait for GitHub before opening a different campaign.');githubClient.disconnect();githubClient=null;githubSnapshot=null;githubMissing=false;githubError=null;}campaign=candidate;dirty=true;render();}
 function openDialog(html){$('#dialog-content').innerHTML=html;if(!dialog.open)dialog.showModal();}
 const closeButton='<button class="close" type="button" data-action="close-dialog" aria-label="Close dialog">×</button>';
 function editCharacter(ch=null){editingCharacter=ch;const c=ch??createCharacter({id:id(),campaignId:campaign.id,name:'',classId:'cleric'});openDialog(`<form id="character-form"><div class="dialog-header"><div><p class="eyebrow">The adventuring party</p><h2 id="dialog-title">${ch?'Edit character':'New character'}</h2></div>${closeButton}</div><div class="dialog-body"><div class="field-row"><label class="field full">Name<input name="name" value="${esc(c.name)}" maxlength="100" required autocomplete="off"></label><label class="field">Class<select name="classId">${Object.keys(campaign.settings.namedLevels).map(x=>option(x,title(x),c.classId)).join('')}</select></label><label class="field">Race<input name="race" value="${esc(c.race)}" maxlength="100" required></label><label class="field">Wisdom<input type="number" name="wisdom" min="1" max="25" step="1" value="${c.wisdom}" required></label><label class="field">Confirmed level (optional)<input type="number" name="manualLevel" min="1" max="20" step="1" value="${c.manualLevel??''}"></label></div><label class="check"><input type="checkbox" name="stronghold" ${c.stronghold?'checked':''}> Owns a qualifying stronghold (+25%)</label><label class="check"><input type="checkbox" name="active" ${c.active?'checked':''}> Active character</label><details><summary>Advanced eligibility & progression</summary><div class="field-row"><label class="field">Named bonus<select name="namedOverride">${overrideOptions(c.namedOverride)}</select></label><label class="field">Wisdom bonus<select name="wisdomOverride">${overrideOptions(c.wisdomOverride)}</select></label><label class="field">Custom additive bonus (%)<input type="number" step="any" min="-99" max="1000" name="customBonusPercent" value="${c.customBonusPercent}" required></label><label class="field">Progression track<select name="progressionTrack">${option('standard','Standard',c.progressionTrack)}${option('hierophant','Druid · Hierophant',c.progressionTrack)}</select></label></div><p class="help">Hierophant progression requires an explicit DM-approved XP reset. Confirmed level is separate from XP qualification.</p></details><label class="field">Character notes<textarea name="notes">${esc(c.notes)}</textarea></label><div id="character-preview" class="preview"></div><p id="character-error" class="error" role="alert"></p><p class="help">Opening XP is entered as a baseline adjustment after creating the character.</p></div><div class="dialog-footer"><button type="button" class="button subtle" data-action="close-dialog">Cancel</button><button type="submit" class="button">${ch?'Apply changes':'Create character'}</button></div></form>`);updateCharacterPreview();}
@@ -41,12 +56,60 @@ function eventCandidate(){const form=$('#event-form'),f=new FormData(form),times
  return createAward(campaign,{...common,categoryId:f.get('categoryId'),inputValue:requiredNumber('inputValue'),multiplier:requiredNumber('multiplier'),distribution:f.get('distribution'),divisor:f.get('distribution')==='shared'?requiredNumber('divisor'):null,recipientIds,unit:f.get('unit')||'XP',treasureKey:f.get('treasureKey')?.trim()||null,itemDescription:f.get('itemDescription')??''});
 }
 function updateEventPreview(){try{const e=eventCandidate(),p=previewEvent(campaign,e),after=replayCampaign(upsertEvent(campaign,e));$('#event-preview').innerHTML=`<div class="preview-title">${editingEvent?'Updated event preview':'Live calculation preview'}</div>${p.entries.map(a=>`<div class="preview-row"><span>${esc(campaign.characters.find(ch=>ch.id===a.characterId).name)}<small>At event: ${fmt(a.before.adjustedXp)} → ${fmt(a.after.adjustedXp)} XP<br>Base ${e.type==='award'?'award':'conversion'}: ${fraction(e.allocations.find(x=>x.characterId===a.characterId).baseXp)}</small></span><span><strong>${fmt(after.characters.find(s=>s.characterId===a.characterId).adjustedXp)} XP</strong><small>Current campaign total</small></span></div>`).join('')}`;$('#event-error').textContent='';$('#record-event').disabled=false;}catch(e){$('#event-preview').innerHTML='<div class="preview-title">Live calculation preview</div><span class="muted">Complete the entry to see each character’s XP.</span>';$('#event-error').textContent=e.message;$('#record-event').disabled=true;}}
-function save(){try{saveLocal(localStorage,campaign);dirty=false;updateStatus();toast('Saved in this browser. Export JSON for a portable backup.');}catch(e){toast('Could not save in this browser: '+e.message);}}
+function save(){try{saveLocal(localStorage,campaign);dirty=false;updateStatus();toast(remoteDirty()?'Saved on device. GitHub still has uncommitted changes.':'Saved in this browser. Export JSON for a portable backup.');}catch(e){toast('Could not save in this browser: '+e.message);}}
 function download(text,name,type){const blob=new Blob([text],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function confirmReplace(){return confirm('Replace the open campaign? Export a JSON backup first if you need to keep it. Your last device save stays intact until you save again.');}
 async function sample(){const response=await fetch('./data/sample-campaign.json');if(!response.ok)throw new Error('Could not load sample campaign');return importJSON(await response.text());}
 function resetFilters(){filters.character='';filters.category='';filters.search='';filters.sort='desc';}
+// All remote operations are explicit. The client owns the token; the UI stores only target fields.
+function rememberTarget(){try{saveConnectionSettings(localStorage,githubConfig);}catch{toast('Connected, but this browser could not remember the repository address.');}}
+function cacheCurrent(){try{saveLocal(localStorage,campaign);dirty=false;}catch{toast('GitHub operation succeeded, but the device backup could not be updated.');}}
+async function connectGitHub(values=null){
+ if(githubBusy)return;
+ const currentText=exportJSON(campaign);let candidate=null,retained=false;
+ try{
+  const config=normalizeGitHubConfig(values??githubConfig);
+  const token=values?.token?.trim();
+  if(token)candidate=new GitHubStorage(config,token);
+  else if(githubClient&&JSON.stringify(config)===JSON.stringify(githubClient.config))candidate=githubClient.fork();
+  else throw new Error('Enter a fine-grained token to connect. It is never stored between page loads.');
+  githubBusy=true;githubError=null;paintGitHub();
+  const loaded=await candidate.loadCampaign();
+  if(exportJSON(campaign)!==currentText)throw new Error('The local campaign changed during loading. Your work was kept; load again when ready.');
+  const loadedText=exportJSON(loaded.campaign);
+  if(loadedText!==currentText&&!confirm('Load the GitHub campaign and replace the open view? Export local JSON first if you need to keep your current work.'))return;
+  githubClient?.disconnect();githubClient=candidate;retained=true;githubConfig=config;
+  campaign=loaded.campaign;githubSnapshot=loadedText;githubMissing=false;dirty=false;
+  resetFilters();rememberTarget();cacheCurrent();render();toast('Loaded and validated the private GitHub campaign.');
+ }catch(error){
+  if(error.code==='FILE_NOT_FOUND'&&candidate){
+   githubClient?.disconnect();githubClient=candidate;retained=true;githubConfig=candidate.config;githubSnapshot=null;githubMissing=true;githubError=null;rememberTarget();toast('Repository reached. Choose Create to initialize a new campaign file.');
+  }else{githubError={code:error.code??'CONNECTION',message:error.message};}
+ }finally{if(candidate&&!retained)candidate.disconnect();githubBusy=false;paintGitHub();}
+}
+async function saveGitHub(){
+ if(githubBusy)return;
+ if(!githubClient?.loaded){location.hash='settings';render();toast('Connect and load the private campaign file before saving to GitHub.');return;}
+ if(!remoteDirty()){toast('No new changes to commit to GitHub.');return;}
+ const snapshot=exportJSON(campaign),copy=importJSON(snapshot);
+ githubBusy=true;githubError=null;paintGitHub();
+ try{await githubClient.saveCampaign(copy);githubSnapshot=snapshot;cacheCurrent();toast(remoteDirty()?'Saved the submitted version. Newer local edits still need a GitHub save.':'All campaign changes committed to GitHub.');}
+ catch(error){githubError={code:error.code??'SAVE',message:error.message};toast(error.code==='CONFLICT'?'GitHub conflict: your local work is kept. Export JSON before loading the remote version.':error.message);}
+ finally{githubBusy=false;paintGitHub();}
+}
+async function initializeGitHub(){
+ if(githubBusy||!githubClient||!githubMissing)return;
+ if(!confirm(`Create ${githubConfig.path} in ${githubConfig.owner}/${githubConfig.repo} from the open campaign?${campaign.illustrative?' This is illustrative sample data, not your real spreadsheet records.':''}`))return;
+ const snapshot=exportJSON(campaign),copy=importJSON(snapshot);githubBusy=true;githubError=null;paintGitHub();
+ try{await githubClient.initializeCampaign(copy);githubSnapshot=snapshot;githubMissing=false;cacheCurrent();toast('Private campaign file created. Future saves will check its version.');}
+ catch(error){githubError={code:error.code??'SAVE',message:error.message};toast(error.message);}
+ finally{githubBusy=false;paintGitHub();}
+}
 async function action(name,element){const key=element?.dataset.id;
+ if(name==='save-github'){await saveGitHub();return;}
+ if(name==='disconnect-github'){if(githubBusy)return;githubClient?.disconnect();githubClient=null;githubSnapshot=null;githubMissing=false;githubError=null;paintGitHub();toast('Disconnected. Token forgotten; open campaign kept.');return;}
+ if(name==='reload-github'){await connectGitHub();return;}
+ if(name==='initialize-github'){await initializeGitHub();return;}
  if(name==='close-dialog'){dialog.close();return;}
  if(name==='add-event'){editEvent();return;}
  if(name==='edit-event'){editEvent(campaign.events.find(e=>e.id===key));return;}
@@ -67,11 +130,12 @@ async function action(name,element){const key=element?.dataset.id;
 document.addEventListener('click',event=>{const b=event.target.closest('[data-action]');if(b)action(b.dataset.action,b).catch(e=>toast(e.message));});
 document.addEventListener('keydown',event=>{if((event.key==='Enter'||event.key===' ')&&event.target.matches('.activity')){event.preventDefault();action('event-details',event.target).catch(e=>toast(e.message));}});
 $('#save-local').addEventListener('click',save);
+$('#save-github').addEventListener('click',()=>saveGitHub().catch(e=>toast(e.message)));
 window.addEventListener('hashchange',render);
-window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{if(dirty||remoteDirty()||githubBusy){event.preventDefault();event.returnValue='';}});
 window.addEventListener('storage',event=>{if(event.key==='campaign-ledger.local.v1')toast('Another tab changed the saved campaign. Export your work before reloading.');});
 document.addEventListener('input',event=>{if(event.target.closest('#event-form'))updateEventPreview();if(event.target.closest('#character-form'))updateCharacterPreview();if(event.target.id==='filter-search'){const p=event.target.selectionStart;filters.search=event.target.value;render();$('#filter-search').focus();$('#filter-search').setSelectionRange(p,p);}});
 document.addEventListener('change',event=>{const target=event.target;if(target.id==='show-archived'){showArchived=target.checked;render();}if(target.id.startsWith('filter-')&&target.id!=='filter-search'){filters[target.id.slice(7)]=target.value;render();}if(target.id==='event-type'||target.id==='distribution'){syncEventFields();updateEventPreview();}if(target.id==='award-category'){$('#event-form').elements.multiplier.value=campaign.categories.find(cat=>cat.id===target.value).multiplier;updateEventPreview();}});
-document.addEventListener('submit',event=>{event.preventDefault();const form=event.target;try{if(form.id==='event-form'){accept(upsertEvent(campaign,eventCandidate()));dialog.close();toast('Ledger updated. Remember to save.');}else if(form.id==='character-form'){accept(characterCandidate().campaign);dialog.close();toast('Character profile applied.');}else if(form.id==='settings-form'){const f=new FormData(form),c=structuredClone(campaign);c.name=f.get('name').trim();c.settings.rounding=f.get('rounding');c.settings.recentEventCount=Number(f.get('recentEventCount'));c.settings.namedQualification=f.get('namedQualification');for(const cls of Object.keys(c.settings.namedLevels))c.settings.namedLevels[cls]=Number(f.get('named-'+cls));accept(c);toast('Campaign settings applied.');}else if(form.id==='category-form'){const f=new FormData(form),c=structuredClone(campaign);for(const cat of c.categories){cat.name=f.get('name-'+cat.id).trim();cat.multiplier=Number(f.get('mult-'+cat.id));}accept(c);toast('Category defaults applied. Historical multipliers are unchanged.');}}catch(e){const selector={'event-form':'#event-error','character-form':'#character-error','settings-form':'#settings-error','category-form':'#category-error'}[form.id];if(selector)$(selector).textContent=e.message;else toast(e.message);}});
+document.addEventListener('submit',event=>{event.preventDefault();const form=event.target;if(form.id==='github-form'){const values=Object.fromEntries(new FormData(form));form.elements.token.value='';connectGitHub(values).catch(e=>toast(e.message));return;}try{if(form.id==='event-form'){accept(upsertEvent(campaign,eventCandidate()));dialog.close();toast('Ledger updated. Remember to save.');}else if(form.id==='character-form'){accept(characterCandidate().campaign);dialog.close();toast('Character profile applied.');}else if(form.id==='settings-form'){const f=new FormData(form),c=structuredClone(campaign);c.name=f.get('name').trim();c.settings.rounding=f.get('rounding');c.settings.recentEventCount=Number(f.get('recentEventCount'));c.settings.namedQualification=f.get('namedQualification');for(const cls of Object.keys(c.settings.namedLevels))c.settings.namedLevels[cls]=Number(f.get('named-'+cls));accept(c);toast('Campaign settings applied.');}else if(form.id==='category-form'){const f=new FormData(form),c=structuredClone(campaign);for(const cat of c.categories){cat.name=f.get('name-'+cat.id).trim();cat.multiplier=Number(f.get('mult-'+cat.id));}accept(c);toast('Category defaults applied. Historical multipliers are unchanged.');}}catch(e){const selector={'event-form':'#event-error','character-form':'#character-error','settings-form':'#settings-error','category-form':'#category-error'}[form.id];if(selector)$(selector).textContent=e.message;else toast(e.message);}});
 $('#import-file').addEventListener('change',async event=>{const file=event.target.files[0];if(!file)return;try{const imported=importJSON(await file.text());if(confirmReplace()){accept(imported);resetFilters();render();toast('Backup imported and validated. Save to keep it on this device.');}}catch(e){toast('Import rejected: '+e.message);}finally{event.target.value='';}});
 try{let stored=null;try{stored=loadLocal(localStorage);}catch(e){toast('Device save could not be loaded. The sample is open; your saved copy has not been overwritten.');}campaign=stored??await sample();render();}catch(e){$('#main').innerHTML=`<div class="panel padded"><h1>Could not open the ledger</h1><p class="error">${esc(e.message)}</p><p>Serve this folder over HTTP rather than opening index.html directly.</p></div>`;}
