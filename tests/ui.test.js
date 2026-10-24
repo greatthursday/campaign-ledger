@@ -1,0 +1,14 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {esc,filteredEvents,overview,ledger,settings,eventDetails,sameAdjustmentInputs} from '../js/ui.js';
+import {loadLocal,saveLocal} from '../js/local-storage.js';
+import {replayCampaign} from '../js/index.js';
+const sample=()=>JSON.parse(readFileSync(new URL('../data/sample-campaign.json',import.meta.url)));
+test('ledger filters combine description, recipient, category and order',()=>{const c=sample();assert.equal(filteredEvents(c,{search:'RUBY',character:'diemer',category:'gems'}).length,1);assert.equal(filteredEvents(c,{category:'adjustment'})[0].id,'opening');assert.equal(filteredEvents(c,{search:'not found'}).length,0);assert.equal(filteredEvents(c,{sort:'asc'})[0].id,'opening');assert.equal(filteredEvents(c)[0].id,'gem');});
+test('HTML renderers escape user-controlled text and preserve shared event count',()=>{const c=sample();c.characters[0].name='<img src=x onerror=alert(1)>';c.events[0].description='<script>bad()</script>';const r=replayCampaign(c);const html=overview(c,r)+ledger(c,r,{})+settings(c)+eventDetails(c,c.events[0],r);assert.ok(!html.includes('<script>bad'));assert.ok(!html.includes('<img src=x'));assert.ok(html.includes('&lt;script&gt;'));assert.equal((ledger(c,r,{}).match(/class="description"/g)||[]).length,3);assert.equal(esc('"&<>\''),'&quot;&amp;&lt;&gt;&#39;');});
+test('local adapter roundtrips complete campaign and rejects corrupt data',()=>{const map=new Map(),storage={getItem:key=>map.get(key)??null,setItem:(key,value)=>map.set(key,value)};assert.equal(loadLocal(storage),null);const c=sample();saveLocal(storage,c);assert.deepEqual(loadLocal(storage),c);map.set('campaign-ledger.local.v1','{"schemaVersion":99}');assert.throws(()=>loadLocal(storage));});
+test('local adapter surfaces unavailable storage without reporting a save',()=>{assert.throws(()=>saveLocal({setItem(){throw new Error('quota');}},sample()),/quota/);});
+
+test('metadata-only adjustment detection preserves conversions independent of recipient order',()=>{const e=sample().events[0];assert.equal(sameAdjustmentInputs(e,{date:e.date,method:e.method,recipients:e.allocations.map(({characterId,amount})=>({characterId,amount})).reverse()}),true);});
+test('changed date, method, amounts or recipients require explicit adjustment reconversion',()=>{const e=sample().events[0],input={date:e.date,method:e.method,recipients:e.allocations.map(({characterId,amount})=>({characterId,amount}))};assert.equal(sameAdjustmentInputs(e,{...input,date:'2026-02-01'}),false);assert.equal(sameAdjustmentInputs(e,{...input,method:'setAdjusted'}),false);assert.equal(sameAdjustmentInputs(e,{...input,recipients:[{characterId:'callista',amount:1}]}),false);assert.equal(Boolean(sameAdjustmentInputs(null,input)),false);});

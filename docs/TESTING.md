@@ -7,3 +7,11 @@ Covered: all eight class progressions, all table boundaries, class-specific refe
 `campaign.schema.json` is a JSON Schema 2020-12 structural contract. Included tests exercise the dependency-free runtime validator and deterministic replay; the project does not bundle a third-party JSON Schema validator. Cross-record relationships and calculated snapshot consistency are enforced by runtime replay, not JSON Schema alone.
 
 No UI/device testing, network/GitHub saving, workbook reconciliation, or deployment has been performed in Phase 1.
+
+## Phase 2 interface validation
+
+The suite now contains 50 passing tests: the original 44 engine tests plus adjustment input-change detection (including metadata-only preservation), combined ledger filters/sorting, rendering escape protection and single-row shared events, complete browser-local adapter roundtrip/corrupt data rejection, and save failure propagation.
+
+Manual browser QA in the managed preview verified dashboard totals, adding a 20,000 XP shared pool with four shares (5,000 base XP per tracked recipient), live retroactive stronghold preview, a mass adjusted-XP reset with a common amount and a different per-character override, ledger description search, local save and reload, and restoring the illustrative sample. Responsive rendering was inspected in real 390×844 and 768×1024 iframe viewports, including the iPhone XP modal. These are browser viewport checks, not physical iOS/Safari device testing.
+
+No production deployment, campaign GitHub synchronization or workbook migration occurred in this phase. The local UI shows this limitation explicitly.

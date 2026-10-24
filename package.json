@@ -1,1 +1,13 @@
-{"name":"campaign-ledger-core","version":"1.0.0","private":true,"type":"module","scripts":{"test":"node --test"},"engines":{"node":">=20"}}
+{
+  "name": "campaign-ledger-core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test",
+    "dev": "node scripts/serve.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

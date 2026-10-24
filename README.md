@@ -1,50 +1,56 @@
-# Campaign Ledger — Phase 1 core
+# Campaign Ledger
 
-Independent JavaScript ES modules for the specified AD&D 2E XP ledger. No runtime dependencies, DOM, database, network calls, credentials, UI, or deployment. The attached workbook has not been migrated or changed.
+A lightweight, buildless AD&D 2E experience tracker. Phase 2 includes a responsive dark fantasy browser interface backed by the independent, tested XP engine.
 
-## Run
+## Run locally
 
-Requires Node.js 20+ for tests. The core also runs in modern browsers supporting ES modules, BigInt and structuredClone.
+Install Node.js 20 or later, then run from this folder:
 
 ```sh
-cd campaign-ledger
+npm run dev
+```
+
+Open the Local URL printed in the terminal (normally http://localhost:3000). No npm install or build is required. To choose a port, use `npm run dev -- --port 4173`. Serve over HTTP; opening index.html directly cannot load sample JSON reliably.
+
+```sh
 npm test
 ```
 
-No npm install is needed. Import the public API from `js/index.js`.
+Tests use Node's built-in test runner. Production files are static and will work on GitHub Pages; no Node server is needed for production hosting.
 
-```js
-import {importJSON, replayCampaign, createAward, upsertEvent, exportJSON} from './js/index.js';
-const campaign = importJSON(jsonText);
-const event = createAward(campaign, {
-  id: 'unique-event-id', date: '2026-10-24',
-  createdAt: '2026-10-24T18:00:00.000Z',
-  description: 'Shared encounter', categoryId: 'combat',
-  inputValue: 20000, distribution: 'shared', divisor: 4,
-  recipientIds: ['callista', 'diemer']
-});
-const updated = upsertEvent(campaign, event);
-console.log(replayCampaign(updated).characters);
-const backup = exportJSON(updated);
-```
+## Current features
 
-`data/sample-campaign.json` is **illustrative**, not migrated campaign data. Expected illustrative balances: Callista 906,563 adjusted XP; Diemer 706,563 adjusted XP. The sample generator is reproducible with `node data/generate-sample.mjs`.
+- Overview, Characters, XP Ledger and Settings tabs, including on mobile.
+- Character cards with XP progress, qualifying versus confirmed level, retroactive bonuses and archival via active status.
+- Popup XP awards with shared/individual distribution, conversion multipliers, treasure identity and notes.
+- Mass XP adjustments with per-character overrides, baseline resets and live before/after/current-total previews.
+- Full ledger search, character/category filters, date sorting, detail view, editing and confirmed deletion.
+- Editable category defaults, custom categories and explicitly confirmed historical recalculation.
+- Campaign rounding, timeline length and provisional per-class named thresholds.
+- Explicit local device save, unsaved indicators, reload protection, JSON import/export and CSV export.
 
-## Contents
+`data/sample-campaign.json` is **illustrative**, not a workbook migration. Sample balances: Callista 906,563 adjusted XP; Diemer 706,563 adjusted XP. Regenerate with `node data/generate-sample.mjs`.
 
-- `js/data-model.js`: campaign and character factories, editable campaign defaults.
-- `js/xp-engine.js`: bonuses, award creation, adjustments, replay, previews and explicit historical recalculation.
-- `js/level-tables.js`: class progression and XP qualification.
-- `js/rational.js`: exact fraction arithmetic; no accumulated rounding drift.
-- `js/validation.js`: import and semantic validation.
-- `js/serialization.js`: pure JSON and CSV portability functions.
+## Saving and privacy
+
+**Save on this device** stores the complete campaign in this browser's localStorage. It does not sync between browsers, devices, or GitHub. Browser data clearing/private mode can remove local saves. Export JSON for a portable backup. Import validates the full ledger before replacing the open campaign. Loading a sample/new campaign/import does not overwrite the last device save until Save is clicked.
+
+The GitHub connection used to maintain this source repository is separate from the future app's campaign-data connection. The application currently contains no GitHub token, authentication or API calls.
+
+## Structure
+
+- `index.html`, `css/theme.css`: accessible page shell and responsive visual theme.
+- `js/app.js`: browser event handling and forms; calculations call the engine.
+- `js/ui.js`: view rendering and ledger filters; all user-supplied HTML text is escaped.
+- `js/local-storage.js`: independent browser-local persistence adapter.
+- `js/xp-engine.js`, `rational.js`, `level-tables.js`: independent exact calculations and verified 2E thresholds.
+- `js/data-model.js`, `validation.js`, `serialization.js`: records, validation and portable data.
 - `data/campaign.schema.json`: JSON Schema 2020-12 structural contract.
-- `docs/API.md`: frontend-facing functions and record format.
-- `docs/RULES.md`: sources, assumptions, boundary behavior and limitations.
-- `tests/xp-engine.test.js`: automated engine/integration tests.
+- `docs/API.md`, `RULES.md`, `TESTING.md`: public engine API, assumptions, rules sources and validation record.
+- `scripts/serve.mjs`: dependency-free local development server only.
 
-The schema describes record structure; runtime validation additionally checks identities, foreign keys, chronology, share counts, duplicate treasure keys, and snapshot consistency through replay. Always use `importJSON` at an untrusted data boundary, and replay an edited candidate before accepting it.
+## Remaining phases
 
-## Next phase
+GitHub load/save with session-only token and SHA conflict detection, workbook migration and reconciliation, and GitHub Pages deployment remain for later phases. No production site has been published.
 
-Build the local interface against this API. GitHub load/save, token handling, file SHA conflict checks, workbook reconciliation and deployment remain intentionally unimplemented.
+Custom unequal awards are preserved, displayed, exported and calculated; their allocation editing remains a JSON-level extension in this interface. Druid hierophant transitions require the explicit profile track and DM-approved reset described in `docs/RULES.md`.
